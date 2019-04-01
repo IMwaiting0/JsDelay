@@ -1,0 +1,78 @@
+<!DOCTYPE html >
+<html>
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        var getXmlHttp = function(){
+            var obj;
+            if (window.XMLHttpRequest)
+                obj = new XMLHttpRequest();
+            else
+                obj = new ActiveXObject("Microsoft.XMLHTTP");
+            return obj;
+        };
+
+        //定义一个全局script的标记数组，用来标记是否某个script已经下载到本地
+        var scriptsArray = new Array();
+        $.cachedScript = function (url, options) {
+//循环script标记数组
+            for (var s in scriptsArray) {
+                if (scriptsArray[s]==url) {
+                    return { //则返回一个对象字面量，其中的done之所以叫做done是为了与下面$.ajax中的done相对应
+                        done: function (method) {
+                            if (typeof method == 'function'){ //如果传入参数为一个方法
+                                method();
+                            }
+                        }
+                    };
+                }
+            }
+//这里是jquery官方提供类似getScript实现的方法，也就是说getScript其实也就是对ajax方法的一个拓展
+            options = $.extend(options || {}, {
+                dataType: "script",
+                url: url,
+                cache:true //其实现在这缓存加与不加没多大区别
+            });
+            scriptsArray.push(url); //将url地址放入script标记数组中
+            return $.ajax(options);
+        };
+        $(function () {
+            $('#btn').bind('click', function () {
+                $.cachedScript('t1.js').done(function () {
+                    alert("t1自己写的方法加载");
+                });
+            });
+            $('#btn2').bind('click', function () {
+                $.getScript('t1.js').done(function () {
+                    alert("t1_getScript加载");
+                });
+            });
+            $('#btn3').bind('click', function () {
+                var xmlHttp = getXmlHttp();
+                xmlHttp.open("GET", "t1.js", true);
+                xmlHttp.send();
+                xmlHttp.onreadystatechange = function () {
+                    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                        // var element = document.createElement("script");
+                        // element.text = xmlHttp.responseText;
+                        // document.body.appendChild(element);
+                        //or
+                        // eval(xmlHttp.responseText);
+                        alert("xmlHttpRequest加载");
+                    }
+                }
+            });
+        });
+
+    </script>
+</head>
+<body>
+<button id="btn">自定义的缓存方法</button>
+<br />
+<button id="btn2">getScript</button>
+<br />
+<button id="btn3">源生ajax方法</button>
+</body>
+</html>
